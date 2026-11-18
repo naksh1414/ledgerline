@@ -21,7 +21,7 @@ to improve this project. Below are some guidelines to help you get started.
 This project adheres to
 the [Contributor Covenant Code of Conduct](https://www.contributor-covenant.org/version/2/0/code_of_conduct/).
 By participating, you are expected to uphold this code. Please report unacceptable behavior
-to [nakshatra@metaupspace.com](mailto:nakshatra@metaupspace.com).
+to [nakshatramanglik14@gmail.com](mailto:nakshatramanglik14@gmail.com).
 
 ## How Can I Contribute?
 

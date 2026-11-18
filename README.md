@@ -310,4 +310,4 @@ details.
 For questions or inquiries:
 
 - **Name:** Nakshatra Manglik
-- **Email:** [nakshatra@metaupspace.com](mailto:nakshatra@metaupspace.com)
+- **Email:** [nakshatramanglik14@gmail.com](mailto:nakshatramanglik14@gmail.com)

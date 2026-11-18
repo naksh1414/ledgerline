@@ -10,7 +10,7 @@ public final class OpenApiDetails {
 
     public static Contact getOpenApiContactDetails () {
         Contact contact = new Contact();
-        contact.setEmail("nakshatra@metaupspace.com");
+        contact.setEmail("nakshatramanglik14@gmail.com");
         contact.setName("Nakshatra Manglik");
         contact.setUrl("https://github.com/naksh1414");
         return contact;
