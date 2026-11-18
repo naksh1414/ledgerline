@@ -1,0 +1,218 @@
+volumes:
+  mysql-data:
+  redis-data:
+  kafka-data:
+  tempo-data:
+  loki-data:
+  prometheus-data:
+  grafana-data:
+
+x-base-service: &base-service
+  restart: unless-stopped
+  env_file:
+    - .env
+  depends_on:
+    - discovery-server
+
+services:
+  discovery-server:
+    <<: *base-service
+    image: naksh1414/ledgerline-discovery-server:latest
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+    labels:
+      logging: "promtail"
+      com.docker.compose.service: "discovery-server"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on: [ ]
+
+  api-gateway:
+    <<: *base-service
+    image: naksh1414/ledgerline-api-gateway:latest
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    labels:
+      logging: "promtail"
+      com.docker.compose.service: "api-gateway"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      - redis
+
+  promtail:
+    image: grafana/promtail:3.6.11
+    container_name: promtail
+    restart: unless-stopped
+    command:
+      - -config.file=/etc/promtail/config.yaml
+    volumes:
+      - ./Docker/promtail/promtail-config.yaml:/etc/promtail/config.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+  
+  loki:
+    image: grafana/loki:3.7.2
+    container_name: loki
+    restart: unless-stopped
+    command:
+      - -config.file=/etc/loki/config.yaml
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+      - ./Docker/loki/loki-config.yaml:/etc/loki/config.yaml:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  tempo:
+    image: grafana/tempo:3.0.2
+    container_name: tempo
+    restart: unless-stopped
+    command:
+      - -config.file=/etc/tempo.yaml
+    volumes:
+      - ./Docker/tempo/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo-data:/var/tempo
+    ports:
+      - "3200:3200"
+
+  otel:
+    image: otel/opentelemetry-collector:0.154.0
+    container_name: otel
+    restart: unless-stopped
+    command:
+      - --config=/etc/otel-collector-config.yaml
+    volumes:
+      - ./Docker/otel/otel-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4318:4318"
+      - "8889:8889"
+    depends_on:
+      - tempo
+
+  prometheus:
+    image: prom/prometheus:v3.12.0
+    container_name: prometheus
+    restart: unless-stopped
+    command:
+      - --enable-feature=exemplar-storage
+      - --web.enable-remote-write-receiver
+      - --config.file=/etc/prometheus/prometheus.yaml
+    volumes:
+      - ./Docker/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    depends_on:
+      - otel
+
+  grafana:
+    image: grafana/grafana:13.0.2
+    container_name: grafana
+    restart: unless-stopped
+    volumes:
+      - ./Docker/grafana:/etc/grafana/provisioning/datasources:ro
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    ports:
+      - "3000:3000"
+    depends_on:
+      - loki
+      - tempo
+      - prometheus
+
+  ledger-mysql:
+    image: mysql:9.7.0
+    container_name: ledger-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./Docker/mysql/ledger.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "41301:3306"
+
+  phpmyadmin:
+    image: phpmyadmin:5.2.3
+    container_name: phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: ledger-mysql
+      PMA_USER: root
+      PMA_PASSWORD: mysql
+    ports:
+      - "9797:80"
+    depends_on:
+      - ledger-mysql
+
+  redis:
+    image: redis:8.4.3-alpine
+    container_name: redis
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - "everysec"
+      - --save
+      - ""
+      - --maxmemory
+      - "256mb"
+      - --maxmemory-policy
+      - "allkeys-lru"
+      - --loglevel
+      - "notice"
+    volumes:
+      - redis-data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.0"
+        reservations:
+          memory: 256m
+    ports:
+      - "6379:6379"
+
+  kafka:
+    image: apache/kafka:4.3.0
+    container_name: kafka
+    restart: unless-stopped
+    environment:
+      - KAFKA_NODE_ID=1
+      - KAFKA_CLUSTER_ID=ledgerline-dev-cluster
+      - KAFKA_PROCESS_ROLES=broker,controller
+      - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092,INTERNAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092,INTERNAL://kafka:29092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@localhost:9093
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
+      - KAFKA_NUM_PARTITIONS=3
+      - KAFKA_LOG_DIRS=/var/lib/kafka/data
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    ports:
+      - "9092:9092"
+      - "29092:29092"

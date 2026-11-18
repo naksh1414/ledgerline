@@ -1,0 +1,79 @@
+<configuration>
+
+    <springProperty name="appName" source="spring.application.name" defaultValue="unknown" />
+    <springProperty name="appVersion" source="spring.application.version" defaultValue="unknown" />
+    <springProperty name="environment" source="spring.profiles.active" defaultValue="local" />
+
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+
+    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+
+                <timestamp>
+                    <fieldName>timestamp</fieldName>
+                    <pattern>yyyy-MM-dd'T'HH:mm:ss.SSS'Z'</pattern>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+
+                <logLevel>
+                    <fieldName>level</fieldName>
+                </logLevel>
+
+                <message>
+                    <fieldName>message</fieldName>
+                </message>
+
+                <globalCustomFields>
+                    <customFields>
+                        {
+                        "application": "${appName:-unknown}",
+                        "version": "${appVersion:-unknown}",
+                        "environment": "${environment:-local}",
+                        "host": "${HOSTNAME:-unknown}"
+                        }
+                    </customFields>
+                </globalCustomFields>
+
+                <mdc>
+                    <includeMdcKeyName>traceId</includeMdcKeyName>
+                    <includeMdcKeyName>spanId</includeMdcKeyName>
+                    <includeMdcKeyName>parentSpanId</includeMdcKeyName>
+                    <includeMdcKeyName>sampled</includeMdcKeyName>
+                    <includeMdcKeyName>correlation_id</includeMdcKeyName>
+                    <includeMdcKeyName>log_type</includeMdcKeyName>
+                </mdc>
+
+                <callerData>
+                    <classFieldName>class</classFieldName>
+                    <methodFieldName>method</methodFieldName>
+                    <lineFieldName>line</lineFieldName>
+                </callerData>
+
+                <loggerName>
+                    <fieldName>logger</fieldName>
+                    <shortenedLoggerNameLength>50</shortenedLoggerNameLength>
+                </loggerName>
+
+                <threadName>
+                    <fieldName>thread</fieldName>
+                </threadName>
+
+                <stackTrace>
+                    <fieldName>exception</fieldName>
+                    <throwableConverter
+                        class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxDepthPerCause>20</maxDepthPerCause>
+                        <rootCauseFirst>true</rootCauseFirst>
+                        <inlineHash>true</inlineHash>
+                    </throwableConverter>
+                </stackTrace>
+
+            </providers>
+        </encoder>
+    </appender>
+
+    <root level="${APP_LOG_LEVEL:-INFO}">
+        <appender-ref ref="Console" />
+    </root>
+</configuration>
