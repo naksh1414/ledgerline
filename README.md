@@ -309,5 +309,5 @@ details.
 
 For questions or inquiries:
 
-- **Name:** Arivan Amin
-- **Email:** [arivanamin@gmail.com](mailto:arivanamin@gmail.com)
+- **Name:** Nakshatra Manglik
+- **Email:** [nakshatra@metaupspace.com](mailto:nakshatra@metaupspace.com)

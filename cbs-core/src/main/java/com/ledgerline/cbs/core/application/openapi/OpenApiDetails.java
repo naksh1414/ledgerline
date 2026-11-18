@@ -10,9 +10,9 @@ public final class OpenApiDetails {
 
     public static Contact getOpenApiContactDetails () {
         Contact contact = new Contact();
-        contact.setEmail("arivanamin@gmail.com");
-        contact.setName("Arivan Amin");
-        contact.setUrl("https://www.arivan-amin.com");
+        contact.setEmail("nakshatra@metaupspace.com");
+        contact.setName("Nakshatra Manglik");
+        contact.setUrl("https://github.com/naksh1414");
         return contact;
     }
 
@@ -22,6 +22,6 @@ public final class OpenApiDetails {
     }
 
     public static String getOpenApiTermsOfService () {
-        return "https://www.arivan-amin.com/ledgerline/cbs/terms";
+        return "https://github.com/naksh1414/ledgerline/cbs/terms";
     }
 }
