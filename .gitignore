@@ -23,3 +23,6 @@ changes.txt
 *.air
 *.ipa
 *.apk
+
+# Local environment (never commit)
+.env
