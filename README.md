@@ -58,8 +58,8 @@ Error response shape:
     "type": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/RuntimeException.html",
     "title": "Requested Ledger Not Found",
     "status": 404,
-    "detail": "Studio by the requested id not found",
-    "instance": "/ledger/protected/v1/studios/33bff7c7-77ee-4c51-9ee0-c870b437f82e",
+    "detail": "Ledger with the requested id not found",
+    "instance": "/ledger/protected/v1/ledgers/33bff7c7-77ee-4c51-9ee0-c870b437f82e",
     "category": "Resource Not Found",
     "timestamp": "2025-04-22T18:45:43.927431130Z"
 }
@@ -72,6 +72,9 @@ Requires Java 25, Maven, Docker and Docker Compose.
 ```bash
 git clone https://github.com/naksh1414/ledgerline.git
 cd ledgerline
+
+# create your local environment file and fill in the credentials
+cp .env.example .env
 
 # build and push images to the local Docker daemon (Jib)
 mvn clean install
