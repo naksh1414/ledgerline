@@ -6,6 +6,7 @@ double-entry ledger as its accounting core.
 ![Java](https://img.shields.io/badge/java-25-brightgreen)
 ![Spring Boot](https://img.shields.io/badge/spring--boot-4.1.1-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-brightgreen)
+[![CI](https://github.com/naksh1414/ledgerline/actions/workflows/ci.yml/badge.svg)](https://github.com/naksh1414/ledgerline/actions/workflows/ci.yml)
 
 ## Status
 
@@ -28,6 +29,18 @@ Grafana/Loki/Tempo for metrics, logs and traces.
 Quality tooling: JUnit, Mockito, ArchUnit, PMD, Pitest (mutation testing), JaCoCo.
 
 ## Architecture
+
+```mermaid
+flowchart LR
+    C[Clients] --> GW["API gateway<br/>routing · Redis rate limiting"]
+    GW <-->|service discovery| EU[(Eureka)]
+    GW --> LS["Ledger service<br/>double-entry · CQRS"]
+    LS <--> EU
+    LS --> DB[(MySQL<br/>Liquibase migrations)]
+    LS -. events .-> K[[Kafka]]
+    GW --> R[(Redis)]
+    LS -. metrics · logs · traces .-> O["OpenTelemetry → Grafana<br/>Loki · Tempo"]
+```
 
 Every service is split into three layers. ArchUnit tests fail the build when a layer reaches
 somewhere it should not.
@@ -102,6 +115,9 @@ Import the prebuilt dashboards from `Docker/grafana/` into Grafana.
 ```bash
 mvn test
 ```
+
+Runs unit tests (including the `Money` value object) and the ArchUnit rules on every push via
+GitHub Actions.
 
 See [Testing.md](Testing.md) for testing conventions.
 
